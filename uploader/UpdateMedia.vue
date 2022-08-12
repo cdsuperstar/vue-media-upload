@@ -109,7 +109,7 @@
                     let formData = new FormData
                     let url = URL.createObjectURL(files[i])
                     formData.set('image', files[i])
-                    const {data} = await axios.post(this.server, formData)
+                    const {data} = await axios.post(this.server, formData, {headers:this.headers})
                         
                     this.added_media.push({url:url, name:data.name, size:files[i].size, type:files[i].type});
                 }
@@ -142,13 +142,15 @@
                 type: String,
                 default: '/api/upload',
             },
+	    headers:{
+            },
             media_file_path:{
                 type: String,
                 required : true,
             }
         },
         mounted() {
-            axios.get(this.media_server)
+            axios.get(this.media_server, {headers:this.headers})
                 .then(response=>{
                     this.saved_media=response.data.media
                     this.loading = false
