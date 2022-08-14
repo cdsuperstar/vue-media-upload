@@ -175,10 +175,10 @@ export default {
     },
   },
   mounted() {
-    console.log("media_server", this.media_server);
+    // console.log("media_server", this.media_server);
     axios.get(this.media_server, { headers: this.headers }).then((response) => {
       this.saved_media = response.data.media;
-      console.log("Save media:", response);
+      // console.log("Save media:", response);
       this.loading = false;
 
       this.media_emit();
