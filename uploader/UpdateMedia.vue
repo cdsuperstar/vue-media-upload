@@ -33,7 +33,7 @@
               id="images-upload"
               type="file"
               accept="image/*"
-              multiple
+              :multiple="multiple"
               hidden
             />
           </div>
@@ -159,6 +159,7 @@ export default {
     },
   },
   props: {
+    multiple: {},
     media_server: {
       type: String,
       required: true,
