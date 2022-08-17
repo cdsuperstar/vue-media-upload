@@ -11,7 +11,7 @@
         <div class="elements-wraper">
           <!--UPLOAD BUTTON-->
           <div class="button-container image-margin">
-            <label for="images-upload" class="images-upload">
+            <label :for="`images-upload${objname}`" class="images-upload">
               <svg
                 class="custum-icon"
                 xmlns="http://www.w3.org/2000/svg"
@@ -30,7 +30,7 @@
             </label>
             <input
               @change="fileChange"
-              id="images-upload"
+              :id="`images-upload${objname}`"
               type="file"
               accept="image/*"
               :multiple="multiple"
@@ -66,32 +66,10 @@
               </svg>
             </button>
           </div>
-          <div
-            v-for="(image, index) in added_media"
-            :key="index"
-            class="image-container image-margin"
-          >
-            <img :src="image.url" alt="" class="images-preview" />
-            <button @click="remove(index)" class="close-btn" type="button">
-              <svg
-                class="times-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                width="0.8em"
-                height="0.8em"
-                preserveAspectRatio="xMidYMid meet"
-                viewBox="0 0 352 512"
-              >
-                <path
-                  d="m242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28L75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256L9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"
-                  fill="currentColor"
-                />
-              </svg>
-            </button>
-          </div>
         </div>
       </div>
     </div>
-    <div v-if="error" id="media-required">
+    <div v-if="error" :id="`media-required${objname}`">
       <p class="red-text">{{ error }}</p>
     </div>
     <div v-for="(image, index) in added_media" :key="index" class="m-top">
@@ -113,8 +91,8 @@ import axios from "axios";
 export default {
   data() {
     return {
+      objname: Math.floor(Math.random() * 1000),
       added_media: [],
-
       saved_media: [],
       deleted_media: [],
 
@@ -122,6 +100,17 @@ export default {
     };
   },
   methods: {
+    loadDataFromRemote() {
+      axios
+        .get(this.media_server, { headers: this.headers })
+        .then((response) => {
+          this.saved_media = response.data.media;
+          // console.log("Save media:", response);
+          this.loading = false;
+
+          this.media_emit();
+        });
+    },
     async fileChange(event) {
       this.loading = true;
       let files = event.target.files;
@@ -140,6 +129,7 @@ export default {
           type: files[i].type,
         });
       }
+      this.loadDataFromRemote();
       this.loading = false;
       this.media_emit();
     },
@@ -148,7 +138,10 @@ export default {
       this.media_emit();
     },
     remove_saved_media(index) {
-      this.deleted_media.push({ name: this.saved_media[index].name });
+      this.deleted_media.push({
+        name: this.saved_media[index].name,
+        collention: this.collention,
+      });
       this.saved_media.splice(index, 1);
       this.media_emit();
     },
@@ -156,9 +149,13 @@ export default {
       this.$emit("added-media", this.added_media);
       this.$emit("deleted-media", this.deleted_media);
       this.$emit("saved-media", this.saved_media);
+      this.deleted_media = [];
     },
   },
   props: {
+    collention: {
+      type: String,
+    },
     multiple: {},
     media_server: {
       type: String,
@@ -176,14 +173,7 @@ export default {
     },
   },
   mounted() {
-    // console.log("media_server", this.media_server);
-    axios.get(this.media_server, { headers: this.headers }).then((response) => {
-      this.saved_media = response.data.media;
-      // console.log("Save media:", response);
-      this.loading = false;
-
-      this.media_emit();
-    });
+    this.loadDataFromRemote();
   },
   components: { Loader },
 };
@@ -214,15 +204,18 @@ export default {
   width: 165px !important;
   height: 88px !important;
 }
+
 .images-upload:hover {
   background-color: #f1f1f1 !important;
 }
+
 .image-container {
   display: inline-table !important;
   height: 90px !important;
   width: 140px !important;
   display: flex !important;
 }
+
 .images-preview {
   border-radius: 5px !important;
   border: 1px solid #ccc !important;
@@ -232,6 +225,7 @@ export default {
   padding-top: -14px !important;
   transition: filter 0.1s linear;
 }
+
 .images-preview:hover {
   filter: brightness(90%);
 }
@@ -258,20 +252,24 @@ export default {
   top: -27px !important;
   width: 0px !important;
 }
+
 .times-icon {
   font-size: 3rem !important;
   padding: 0px !important;
   margin: 0px !important;
 }
+
 .custum-icon {
   color: #00afca !important;
   font-size: 3rem !important;
   margin-top: 18px !important;
   margin-left: 44px !important;
 }
+
 .custum-icon:hover {
   color: #29818f !important;
 }
+
 .close-btn:hover {
   color: rgb(190, 39, 39) !important;
 }
@@ -281,6 +279,7 @@ export default {
 .width-100 {
   width: 100% !important;
 }
+
 .red-border {
   border: 1px solid #dc3545 !important;
   border-color: #dc3545 !important;
@@ -291,9 +290,11 @@ export default {
   display: flex !important;
   flex-wrap: wrap !important;
 }
+
 .align-center {
   text-align: center !important;
 }
+
 .m-top-1 {
   margin-top: 0.25rem !important;
 }
@@ -304,6 +305,7 @@ export default {
   margin-top: 0.25rem !important;
   margin-bottom: 0.25rem !important;
 }
+
 .red-text {
   color: #d82335;
 }
